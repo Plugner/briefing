@@ -9,9 +9,18 @@ import {
   setAudioTracks,
 } from "./logic/stream"
 import { trackException, trackSilentException } from "./bugs"
-import { PRODUCTION, ROOM_PATH } from "./config"
+import {
+  PRODUCTION,
+  ROOM_PATH,
+  SHOW_FULLSCREEN,
+  SHOW_INVITATION,
+  SHOW_INVITATION_HINT,
+  SHOW_SETTINGS,
+  SHOW_SHARE,
+} from "./config"
 import { normalizeName } from "./lib/names"
-
+import { postMessageToParent } from "./lib/iframe.js"
+import { objectSnapshot, isTrue } from "./lib/base.js"
 const log = require("debug")("app:state")
 
 const screenshots = false
@@ -55,14 +64,13 @@ try {
   trackSilentException(err)
 }
 
-console.log("Room =", room)
+// Hack to avoid routing ;)
+const embedDemo = room === "embed-demo"
+if (embedDemo) room = null
+
+console.log("Room =", room, "Embed Demo =", embedDemo)
 
 // STATE
-
-function isTrue(value, dflt = false) {
-  if (value == null) return dflt
-  return ["1", "true", "yes"].includes(value.toString().toLocaleLowerCase())
-}
 
 const urlParams = new URLSearchParams(window.location.search)
 
@@ -104,6 +112,13 @@ export let state = {
   error: null,
   upgrade: false,
   requestBugTracking: false,
+  embedDemo,
+
+  showInviteOnStart: isTrue(urlParams.get("invite"), SHOW_INVITATION),
+  showInviteHint: isTrue(urlParams.get("invite"), SHOW_INVITATION_HINT),
+  showFullscreen: isTrue(urlParams.get("fs"), SHOW_FULLSCREEN),
+  showSettings: isTrue(urlParams.get("prefs"), SHOW_SETTINGS),
+  showShare: isTrue(urlParams.get("share"), SHOW_SHARE),
 
   screenshots,
 }
@@ -264,4 +279,40 @@ export async function setup() {
       rtc?.cleanup()
     },
   }
+}
+
+// Communicate to parent
+
+let lastUpdateSnapshot = ""
+let counter = 0
+
+export function postUpdateToIframeParent() {
+  setTimeout(() => {
+    try {
+      let update = {
+        room: state.room,
+        error: state.error,
+        peers: Array.from(state.status || []).map((info) => ({
+          id: info.id,
+          active: info.active,
+          initiator: info.initiator,
+          error: info.error,
+          fingerprint: info.fingerprint,
+        })),
+        backgroundMode: state.backgroundMode,
+        muteVideo: state.muteVideo,
+        muteAudio: state.muteAudio,
+        maximized: state.maximized,
+      }
+      let snapshot = objectSnapshot(update)
+      // console.log("snapshot", snapshot)
+      if (snapshot !== lastUpdateSnapshot) {
+        lastUpdateSnapshot = snapshot
+        update.counter = counter++
+        postMessageToParent("status", update)
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }, 0)
 }

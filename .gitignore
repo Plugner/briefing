@@ -14,10 +14,12 @@ dist_electron
 bg.jpg
 *.local
 .htaccess
-.htaccess 2
+.htaccess*
 tmp
 ios/Briefing/Briefing.xcodeproj/project.xcworkspace/xcuserdata/dirk.xcuserdatad/UserInterfaceState.xcuserstate
 ios/Briefing/Briefing.xcodeproj/xcuserdata/dirk.xcuserdatad/xcdebugger/Breakpoints_v2.xcbkptlist
 ios/Briefing/Briefing.xcodeproj/xcuserdata/dirk.xcuserdatad/xcschemes/xcschememanagement.plist
 app/public/faces
 .rsync-ignore
+pnpm-lock.yaml
+package-lock.json

@@ -67,7 +67,12 @@
 
         <div
           class="message-container"
-          v-else-if="!hasPeers && !state.screenshots && mode !== 'share'"
+          v-else-if="
+            !hasPeers &&
+            !state.screenshots &&
+            mode !== 'share' &&
+            state.showInviteHint
+          "
         >
           <div
             class="message"
@@ -78,6 +83,7 @@
 
       <div class="tools hstack">
         <sea-link
+          v-if="state.showSettings"
           @action="doTogglePanel('settings')"
           class="tool"
           :class="{ '-active': mode === 'settings' }"
@@ -204,7 +210,7 @@
           </sea-link>
         </div>
         <sea-link
-          v-if="supportsFullscreen"
+          v-if="state.showFullscreen && supportsFullscreen"
           @action="doToggleFullScreen"
           class="tool"
         >
@@ -242,6 +248,7 @@
           </svg>
         </sea-link>
         <sea-link
+          v-if="state.showShare"
           @action="doTogglePanel('share')"
           class="tool"
           :class="{ '-active': mode === 'share' }"
@@ -272,14 +279,6 @@
     >
       <app-share></app-share>
     </sea-modal>
-
-    <!--    <sea-modal :active.sync="share" close :title="l.share.title">-->
-    <!--      <app-share></app-share>-->
-    <!--    </sea-modal>-->
-
-    <!--    <sea-modal :active.sync="settings" close :title="l.settings.title" class="text">-->
-    <!--      <app-settings></app-settings>-->
-    <!--    </sea-modal>-->
   </div>
 </template>
 
@@ -411,7 +410,7 @@ export default {
     setTimeout(async () => {
       this.conn = await setup()
     }, 50)
-    if (!this.hasPeers && !window.iPhone) {
+    if (!this.hasPeers && !window.iPhone && this.state.showInviteOnStart) {
       this.mode = "share"
     }
     this.fullscreenHandler = (ev) => {

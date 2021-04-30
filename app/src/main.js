@@ -6,8 +6,9 @@ import en from "./locales/en.json"
 import it from "./locales/it.json"
 import zh from "./locales/zh.json"
 import fr from "./locales/fr.json"
+import ru from "./locales/ru.json"
 import App from "./pwa-app.vue"
-import { state } from "./state"
+import { postUpdateToIframeParent, state } from "./state"
 import { setupBugTracker } from "./bugs"
 
 // This will be done privacy conform, see bugs/README-BUGTRACKER.md
@@ -33,7 +34,15 @@ Vue.config.productionTip = false
 
 Vue.mixin({
   data() {
-    return { state }
+    return {
+      state,
+    }
+  },
+  watch: {
+    state: {
+      handler: postUpdateToIframeParent,
+      deep: true,
+    },
   },
   methods: {
     openExternalLink(event) {
@@ -61,7 +70,14 @@ Vue.mixin({
 })
 
 Vue.use(locale, {
-  locales: { en, de, it, zh, fr },
+  locales: {
+    en,
+    de,
+    it, // Thanks to https://github.com/albanobattistella
+    fr,
+    zh, // Thanks to https://github.com/Bruce-Ming
+    ru, // Thanks to https://github.com/vorons
+  },
 })
 
 new Vue({
